@@ -23,7 +23,9 @@ package org.nhindirect.gateway.smtp.james.mailet;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.DateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -218,6 +220,7 @@ public class TimelyAndReliableLocalDelivery extends AbstractNotificationAwareMai
 		boolean deliverySuccessful = false;
 		
 		final MimeMessage msg = mail.getMessage();
+		String originalMessageId = msg.getMessageID();
 		final boolean isReliableAndTimely = TxUtil.isReliableAndTimelyRequested(msg);
 		
 		final NHINDAddressCollection recipients = getMailRecipients(mail);
@@ -238,7 +241,7 @@ public class TimelyAndReliableLocalDelivery extends AbstractNotificationAwareMai
 		final Tx txToTrack = this.getTxToTrack(msg, sender, recipients);
 		
 		if (deliverySuccessful)
-		{	
+		{
 			if (isReliableAndTimely && txToTrack.getMsgType() == TxMessageType.IMF)
 			{
 
@@ -258,7 +261,20 @@ public class TimelyAndReliableLocalDelivery extends AbstractNotificationAwareMai
 							if (dispatchedMDNDelay > 0)
 								Thread.sleep(dispatchedMDNDelay);
 							
+							
+							String mdnMessageId = message.getMessageID();
+							Date sentDate = message.getSentDate();
+							String sentDateString = DateFormat.getDateInstance().format(sentDate);
 							getMailetContext().sendMail(message);
+							
+							try {							
+								LOGGER.info("Dispatched MDN " + mdnMessageId + " sent successfully in response to " + originalMessageId + " on " + sentDateString + "."); 
+							} catch(Exception ex) {
+								LOGGER.warn("Error logging MDN.");
+								LOGGER.warn(ex.getMessage());
+								LOGGER.warn(ex);
+							}
+							
 						}
 						///CLOVER:OFF
 						catch (Throwable t)

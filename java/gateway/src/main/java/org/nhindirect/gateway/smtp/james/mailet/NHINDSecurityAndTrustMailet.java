@@ -26,9 +26,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -276,6 +278,8 @@ public class NHINDSecurityAndTrustMailet extends AbstractNotificationAwareMailet
 			onPreprocessMessage(mail);
 			
 			final MimeMessage msg = mail.getMessage();
+
+			String originalMessageId = msg.getMessageID();
 			
 			final NHINDAddressCollection recipients = getMailRecipients(mail);
 			
@@ -378,7 +382,19 @@ public class NHINDSecurityAndTrustMailet extends AbstractNotificationAwareMailet
 				{
 					try
 					{
+						String mdnMessageId = message.getMessageID();
+						Date sentDate = message.getSentDate();
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+						String sentDateString = sdf.format(sentDate);
 						this.getMailetContext().sendMail(message);
+						
+						try {							
+							LOGGER.info("Processed MDN " + mdnMessageId + " sent successfully in response to " + originalMessageId + " on " + sentDateString + "."); 
+						} catch(Exception ex) {
+							LOGGER.warn("Error logging MDN.");
+							LOGGER.warn(ex.getMessage());
+							LOGGER.warn(ex);
+						}
 					}
 					catch (Throwable t)
 					{
