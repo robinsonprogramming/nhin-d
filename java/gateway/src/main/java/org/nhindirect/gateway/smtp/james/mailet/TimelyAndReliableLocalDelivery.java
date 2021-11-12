@@ -23,7 +23,7 @@ package org.nhindirect.gateway.smtp.james.mailet;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -264,7 +264,8 @@ public class TimelyAndReliableLocalDelivery extends AbstractNotificationAwareMai
 							
 							String mdnMessageId = message.getMessageID();
 							Date sentDate = message.getSentDate();
-							String sentDateString = DateFormat.getDateInstance().format(sentDate);
+							SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+							String sentDateString = sdf.format(sentDate);
 							getMailetContext().sendMail(message);
 							
 							try {							
