@@ -597,7 +597,7 @@ public class WSSmtpAgentConfigFunctional_Test extends AbstractServerTest
             	Iterator<CertificateResolver> iter = resolvers.iterator();
             	
  
-            	CertificateResolver ldapPublicStore;
+            	CertificateResolver ldapPublicStore = null;
             	assertTrue(iter.next() instanceof DNSCertificateStore);
             	assertTrue((ldapPublicStore = iter.next()) instanceof LDAPCertificateStore);
             	

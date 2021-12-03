@@ -26,11 +26,13 @@ import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.mail.MessagingException;
+import javax.mail.internet.InternetHeaders;
 import javax.mail.internet.MimeMessage;
 
 import org.apache.commons.logging.Log;
@@ -268,8 +270,38 @@ public class TimelyAndReliableLocalDelivery extends AbstractNotificationAwareMai
 							String sentDateString = sdf.format(sentDate);
 							getMailetContext().sendMail(message);
 							
-							try {							
-								LOGGER.info("Dispatched MDN " + mdnMessageId + " sent successfully in response to " + originalMessageId + " on " + sentDateString + "."); 
+							try {					        
+						        StringBuilder loggingOutput = new StringBuilder();
+						        loggingOutput.append("\n    Message-Date: " + sentDate);
+						        loggingOutput.append("\n    Message-ID: " + mdnMessageId);
+						        loggingOutput.append("\n    " + message.getFromHeader());
+						        loggingOutput.append("\n    " + message.getToHeader());
+						        loggingOutput.append("\n    Original-Message-ID: " + originalMessageId);
+						        
+						        // We need to dig into the message content in order to get the MDN disposition.
+						        Object messageContent = message.getContent();
+					        	com.sun.mail.dsn.MultipartReport multipartReport = (com.sun.mail.dsn.MultipartReport)messageContent;
+					        	int bodyPartCount = multipartReport.getCount();
+					        	
+					        	for (int i = 0; i < bodyPartCount; i++) {
+					        		javax.mail.BodyPart bodyPart = multipartReport.getBodyPart(i);
+					        		try {
+						        		com.sun.mail.dsn.DispositionNotification myContent = (com.sun.mail.dsn.DispositionNotification)bodyPart.getContent();
+						        		
+						        		InternetHeaders internetHeaders = myContent.getNotifications();
+						        		for (Enumeration<?> myHeaderLines = internetHeaders.getAllHeaderLines(); myHeaderLines.hasMoreElements();) {
+						        			String potentialDisposition = myHeaderLines.nextElement().toString();
+						        			int dispositionIndex = potentialDisposition.indexOf("Disposition");
+						        			if (dispositionIndex != -1) {
+						        				loggingOutput.append("\n    " + potentialDisposition);
+						        				i = bodyPartCount + 50;  // Break from the for loop.
+						        			}
+										}
+					        		} catch (Exception exe) {}
+					        	}
+					        	
+								LOGGER.info(loggingOutput.toString());
+								//LOGGER.info("Processed MDN " + mdnMessageId + " sent successfully in response to " + originalMessageId + " on " + sentDateString + "."); 
 							} catch(Exception ex) {
 								LOGGER.warn("Error logging MDN.");
 								LOGGER.warn(ex.getMessage());
