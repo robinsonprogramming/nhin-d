@@ -191,7 +191,8 @@ public abstract class DocumentRepositoryAbstract
 
                 // Construct message wrapper
                 DirectMessage message = new DirectMessage(replyEmail, getResolver().getSmtpEndpoints(forwards));
-                message.setSubject("XD* Originated Message");
+                String mySubject = "XDM/1.0/DDM";
+                message.setSubject(mySubject);
                 message.setBody("Please find the attached XDM file.");
                 message.setDirectDocuments(documents);
 
